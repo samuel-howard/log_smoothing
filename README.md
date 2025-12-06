@@ -1,0 +1,1 @@
+Research code for the paper 'Diffusion Models and the Manifold Hypothesis: Log-Domain Smoothing is Geometry Adaptive', https://arxiv.org/abs/2510.02305

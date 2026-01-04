@@ -46,7 +46,6 @@ class SinusoidalPosEmbedding(nn.Module):
 
     @nn.compact
     def __call__(self, pos):
-        """Refer to https://arxiv.org/pdf/1706.03762.pdf#subsection.3.5"""
         batch_size = pos.shape[0]
 
         assert self.dim % 2 == 0, self.dim

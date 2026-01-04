@@ -13,7 +13,7 @@ class VE_diffuser():
         return t
 
     def g_t(self, t):
-        return jax.grad(self.v_t)(t)
+        return 1.0 # jax.sqrt(jax.grad(self.v_t)(t))
     
     def sample_fwd(self, rng, x0, ts):
         """
@@ -59,7 +59,7 @@ def empirical_eps_fn(x, data, t):
     return eps_pred
 
 
-def sample_rev(self, rng, eps_fn, num_samples=16, image_shape=(28, 28, 1), num_steps=100, add_last_noise: bool = True):
+def sample_rev(ve, rng, eps_fn, num_samples=16, image_shape=(28, 28, 1), num_steps=100, add_last_noise: bool = True):
     # Samples with eps_fn; noise on last step is optional via add_last_noise.
 
     def step(carry, inp):
@@ -68,8 +68,8 @@ def sample_rev(self, rng, eps_fn, num_samples=16, image_shape=(28, 28, 1), num_s
         rng, rng1, rng2 = jax.random.split(rng, 3)
 
         dt = prev_t - curr_t
-        g_t = self.g_t(prev_t)
-        v_t = self.v_t(prev_t)
+        g_t = ve.g_t(prev_t)
+        v_t = ve.v_t(prev_t)
         sigma_t = jnp.sqrt(v_t)
 
         t = prev_t
@@ -90,15 +90,16 @@ def sample_rev(self, rng, eps_fn, num_samples=16, image_shape=(28, 28, 1), num_s
         return (xs, rng, curr_t), xs
 
     rng, rng_ = jax.random.split(rng)
-    x0 = jnp.sqrt(self.v_t(self.T)) * jax.random.normal(rng_, (num_samples, *image_shape))
+    x0 = jnp.sqrt(ve.v_t(ve.T)) * jax.random.normal(rng_, (num_samples, *image_shape))
 
     powers = jnp.linspace(0, 1, num_steps)
-    ts = self.sigma_min**2 * (self.sigma_max**2 / self.sigma_min**2) ** powers
+    ts = ve.sigma_min**2 * (ve.sigma_max**2 / ve.sigma_min**2) ** powers
     ts = jnp.concatenate([jnp.array([0.0]), ts])
     reverse_ts = ts[::-1]
 
     scan_ts = reverse_ts[1:]  # length = num_steps
     is_last = (jnp.arange(scan_ts.shape[0]) == (scan_ts.shape[0] - 1))
-    init = (x0, rng, self.T)
+    init = (x0, rng, ve.T)
     (xs, _, _), traj = jax.lax.scan(step, init, (scan_ts, is_last))
     return xs, traj
+

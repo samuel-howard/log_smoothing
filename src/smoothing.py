@@ -16,7 +16,7 @@ def get_smoothed_fn(func, sigma, n=1000):
         # Evaluate func at each of these shifted points
         # vals, potentials = jax.vmap(lambda offset: func(offset, t, key))(shifted_points)
         vals = jax.vmap(lambda offset: func(offset, t, key))(shifted_points)
-        # Return the mean of these values
+        # Return the mean of these values (key not used in func here)
         return jnp.mean(vals, axis=0)
     
     return smoothed_func
@@ -50,7 +50,7 @@ def get_manifold_translated_smoothed_fn(func, sigma, true_manifold_alphas, true_
 
         # # Evaluate func at each of these shifted points
         vals = jax.vmap(lambda offset: func(offset, t, key))(shifted_points)
-        # Return the mean of these values
+        # Return the mean of these values (key not used in func here)
         return jnp.mean(vals, axis=0)
 
     return smoothed_func

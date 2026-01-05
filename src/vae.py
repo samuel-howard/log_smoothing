@@ -312,16 +312,18 @@ class VAE(nn.Module):
     # training
 
     def vae_loss(self, params, rng, xs):
-        reconstruction, means, log_vars = self.apply(params, xs, train=True, rngs={'dropout': rng}) # (B, 32, 32, 1), (B, 8), (B, 8)
+        dropout_rng, sample_rng = jax.random.split(rng)
+
+        reconstruction, means, log_vars = self.apply(params, xs, train=True, rng=sample_rng, rngs={'dropout': dropout_rng}) # (B, 32, 32, 1), (B, 8), (B, 8)
         
         # Reconstruction loss
-        recon_losses = jnp.sum((xs - reconstruction) ** 2, axis=1) # (B,)
+        recon_losses = jnp.sum((xs - reconstruction) ** 2, axis=(1,2,3)) # (B,)
         recon_loss = jnp.mean(recon_losses)
         
         # KL divergence
         kl_loss = -0.5 * jnp.mean(1 + log_vars - means ** 2 - jnp.exp(log_vars))
 
-        loss = recon_loss + kl_loss
+        loss = recon_loss + 0.01 * kl_loss
         
         return loss, (recon_loss, kl_loss)
 
